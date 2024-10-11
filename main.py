@@ -1,6 +1,8 @@
 import eventlet
 eventlet.monkey_patch()
 
+import redis
+
 #!/bin/env python
 from app import create_app, socketio
 

@@ -47,3 +47,4 @@ wtforms==3.1.2
 
 eventlet==0.37.0
 gunicorn==23.0.0
+redis==5.1.1
