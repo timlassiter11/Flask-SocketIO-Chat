@@ -14,5 +14,6 @@ COPY . ./
 # Install production dependencies.
 RUN pip install -r requirements.txt
 RUN pip install gunicorn
+pip install --upgrade google-cloud-logging
 
 CMD exec gunicorn --worker-class eventlet --bind :$PORT --workers 1 --timeout 0 main:app
