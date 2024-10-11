@@ -2,7 +2,10 @@ import os
 from flask import Flask
 from flask_socketio import SocketIO
 
-socketio = SocketIO(message_queue=f'redis://{os.environ.get("REDISHOST")}')
+redis_host = os.environ.get("REDISHOST")
+redis_port = os.environ.get("REDISPORT")
+
+socketio = SocketIO(message_queue=f'redis://{redis_host}:{redis_port}')
 
 
 def create_app(debug=False):
