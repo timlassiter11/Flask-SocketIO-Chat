@@ -45,5 +45,6 @@ wsproto==1.2.0
 wtforms==3.1.2
     # via flask-wtf
 
-gevent==24.10.2
+eventlet==0.37.0
 gunicorn==23.0.0
+redis==5.1.1

@@ -11,8 +11,10 @@ ENV APP_HOME /app
 WORKDIR $APP_HOME
 COPY . ./
 
+RUN apt-get update && apt-get install -y redis-server 
+
 # Install production dependencies.
 RUN pip install -r requirements.txt
 RUN pip install gunicorn
 
-CMD exec gunicorn -k gevent --bind :$PORT --workers 1 --timeout 0 main:app
+CMD exec gunicorn --worker-class eventlet --bind :$PORT --workers 1 --timeout 0 main:app
