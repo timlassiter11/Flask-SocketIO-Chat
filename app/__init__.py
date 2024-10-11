@@ -1,7 +1,8 @@
+import os
 from flask import Flask
 from flask_socketio import SocketIO
 
-socketio = SocketIO(message_queue='redis://10.225.231.3:6379')
+socketio = SocketIO(message_queue=f'redis://{os.environ.get("REDISHOST")}')
 
 
 def create_app(debug=False):
