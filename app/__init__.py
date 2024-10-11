@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_socketio import SocketIO
 
-socketio = SocketIO(message_queue=f'redis://0.0.0.0:6379')
+socketio = SocketIO()
 
 
 def create_app(debug=False):
