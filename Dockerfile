@@ -8,6 +8,4 @@ RUN pip install --no-cache-dir google-cloud-logging
 
 COPY . .
 
-#CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "main:app", "-k", "eventlet.wsgi.server"]
-#CMD gunicorn --bind 0.0.0.0:$PORT main:app -k eventlet.wsgi.server
-CMD exec gunicorn --worker-class gevent --bind :$PORT --workers 1 --timeout 0 main:app
+CMD gunicorn -k gevent --bind :$PORT --workers 1 --timeout 0 main:app

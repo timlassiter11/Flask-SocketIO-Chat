@@ -1,14 +1,12 @@
 import os
+import redis
 from flask import Flask
 from flask_socketio import SocketIO
 
-from gevent import monkey
-monkey.patch_all()
+redis_host = os.environ.get("REDISHOST", '127.0.0.1')
+redis_port = os.environ.get("REDISPORT", 6379)
 
-redis_host = os.environ.get("REDISHOST")
-redis_port = os.environ.get("REDISPORT")
-
-socketio = SocketIO(message_queue=f'redis://{redis_host}:{redis_port}', async_mode='gevent')
+socketio = SocketIO(message_queue=f'redis://{redis_host}:{redis_port}')
 
 
 def create_app(debug=False):
