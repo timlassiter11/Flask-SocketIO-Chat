@@ -1,0 +1,15 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+  chat:
+    build: 
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    environment:
+      PORT: 8080
+      REDISHOST: redis
+      REDISPORT: 6379
+    depends_on: 
+      - redis

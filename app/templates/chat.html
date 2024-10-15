@@ -1,47 +1,95 @@
-<html>
-  <head>
-    <title>Flask-SocketIO-Chat: {{ room }}</title>
-    <script type="text/javascript" src="//code.jquery.com/jquery-1.4.2.min.js"></script>
-    <script type="text/javascript" src="//cdn.socket.io/4.4.1/socket.io.min.js"></script>
-    <script type="text/javascript" charset="utf-8">
-      let socket;
-      $(document).ready(function(){
-        socket = io.connect('/chat');
-        socket.on('connect', function() {
-          socket.emit('joined', {});
-        });
-        socket.on('status', function(data) {
-          d = new Date();
-          $('#chat').val($('#chat').val() + `[${d.toLocaleTimeString()}] <${data.msg}>\n`);
-          $('#chat').scrollTop($('#chat')[0].scrollHeight);
-        });
-        socket.on('message', function(data) {
-          $('#chat').val($('#chat').val() + `[${d.toLocaleTimeString()}] ${data.msg}\n`);
-          $('#chat').scrollTop($('#chat')[0].scrollHeight);
-        });
-        $('#text').keypress(function(e) {
-          const code = e.keyCode || e.which;
-          if (code == 13) {
-            text = $('#text').val();
-            $('#text').val('');
-            socket.emit('text', {msg: text});
-          }
-        });
-      });
-      function leave_room() {
-        socket.emit('left', {}, function() {
-          socket.disconnect();
+{% extends 'base.html' %} {% block content %}
+<div class="d-flex flex-column h-100 p-4 gap-3">
+  <textarea id="chat" class="form-control flex-grow-1" readonly></textarea>
+  <input
+    id="text"
+    class="form-control"
+    type="text"
+    placeholder="Enter your message here"
+    autocomplete="false"
+  />
+</div>
+<div
+  class="modal fade"
+  id="usernameModal"
+  data-bs-backdrop="static"
+  data-bs-keyboard="false"
+  tabindex="-1"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Enter Name</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="nameInput" class="form-label">Name</label>
+          <input
+            class="form-control"
+            type="text"
+            name="name"
+            id="nameInput"
+            placeholder=""
+            required
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="joinBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %} {{ super() }}
+<script
+  type="text/javascript"
+  src="//code.jquery.com/jquery-1.4.2.min.js"
+></script>
+<script
+  type="text/javascript"
+  src="//cdn.socket.io/4.4.1/socket.io.min.js"
+></script>
+<script type="text/javascript" charset="utf-8">
+  document.addEventListener("DOMContentLoaded", () => {
+    const usernameModal = new bootstrap.Modal("#usernameModal", {});
+    const joinBtn = document.getElementById("joinBtn");
 
-          // go back to the login page
-          window.location.href = "{{ url_for('main.index') }}";
-        });
+    const socket = io.connect("/chat");
+    socket.on("status", (data) => {
+      d = new Date();
+      $("#chat").val(
+        $("#chat").val() + `[${d.toLocaleTimeString()}] <${data.msg}>\n`
+      );
+      $("#chat").scrollTop($("#chat")[0].scrollHeight);
+    });
+    socket.on("message", function (data) {
+      $("#chat").val(
+        $("#chat").val() + `[${d.toLocaleTimeString()}] ${data.msg}\n`
+      );
+      $("#chat").scrollTop($("#chat")[0].scrollHeight);
+    });
+    $("#text").keypress(function (e) {
+      const code = e.keyCode || e.which;
+      if (code == 13) {
+        text = $("#text").val();
+        $("#text").val("");
+        socket.emit("text", { msg: text });
       }
-    </script>
-  </head>
-  <body>
-    <h1>Flask-SocketIO-Chat: {{ room }}</h1>
-    <textarea id="chat" cols="80" rows="20"></textarea><br><br>
-    <input id="text" size="80" placeholder="Enter your message here"><br><br>
-    <a href="#" onclick="leave_room();">Leave this room</a>
-  </body>
-</html>
+    });
+
+    joinBtn.addEventListener("click", () => {
+      const name = document.getElementById("nameInput").value;
+      localStorage.setItem("username", name);
+      socket.emit("joined", { name: name });
+      usernameModal.hide();
+    });
+
+    const name = localStorage.getItem("username");
+    if (name) {
+      socket.emit("joined", { name: name });
+    } else {
+      usernameModal.show();
+    }
+  });
+</script>
+{% endblock %}
