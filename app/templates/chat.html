@@ -1,8 +1,12 @@
 {% extends 'base.html' %} {% block content %}
 <div class="d-flex flex-column h-100 p-4 gap-3">
-  <textarea id="chat" class="form-control flex-grow-1" readonly></textarea>
+  <textarea
+    id="chatTextarea"
+    class="form-control flex-grow-1"
+    readonly
+  ></textarea>
   <input
-    id="text"
+    id="messageInput"
     class="form-control"
     type="text"
     placeholder="Enter your message here"
@@ -23,12 +27,12 @@
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label for="nameInput" class="form-label">Name</label>
+          <label for="usernameInput" class="form-label">Name</label>
           <input
             class="form-control"
             type="text"
             name="name"
-            id="nameInput"
+            id="usernameInput"
             placeholder=""
             required
           />
@@ -43,53 +47,83 @@
 {% endblock %} {% block scripts %} {{ super() }}
 <script
   type="text/javascript"
-  src="//code.jquery.com/jquery-1.4.2.min.js"
-></script>
-<script
-  type="text/javascript"
   src="//cdn.socket.io/4.4.1/socket.io.min.js"
 ></script>
 <script type="text/javascript" charset="utf-8">
-  document.addEventListener("DOMContentLoaded", () => {
-    const usernameModal = new bootstrap.Modal("#usernameModal", {});
+  const badger = new Badger({src: "/static/images/favicon.ico"});
+  badger.value = 0;
+  
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      badger.value = 0;
+    }
+  });
+
+  const addStatusToChat = (msg) => {
+    addMessageToChat(`<${msg}>`);
+  };
+
+  const addMessageToChat = (msg) => {
+    const chatEl = document.getElementById("chatTextarea");
+    const d = new Date();
+    chatEl.value += `[${d.toLocaleTimeString()}] ${msg}\n`;
+    chatEl.scrollTop = chatEl.scrollHeight;
+
+    if (document.hidden) {
+      badger.value++;
+    }
+  };
+
+  const updateName = async () => {
+    let username = localStorage.getItem("username");
+    const usernameInput = document.getElementById("usernameInput");
+
+    if (username) {
+      usernameInput.value = username;
+    }
+
+    const usernameModalEl = document.getElementById("usernameModal");
+    const usernameModal = new bootstrap.Modal(usernameModalEl, {});
+    usernameModal.show();
+
     const joinBtn = document.getElementById("joinBtn");
 
+    username = "";
+    while (username == "") {
+      await waitForEvent(joinBtn, "click");
+      username = usernameInput.value;
+    }
+
+    localStorage.setItem("username", username);
+    usernameModal.hide();
+    return username;
+  };
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    let username = localStorage.getItem("username");
+    if (!username) {
+      username = await updateName();
+    }
+
     const socket = io.connect("/chat");
-    socket.on("status", (data) => {
-      d = new Date();
-      $("#chat").val(
-        $("#chat").val() + `[${d.toLocaleTimeString()}] <${data.msg}>\n`
-      );
-      $("#chat").scrollTop($("#chat")[0].scrollHeight);
+    socket.on("connect", (data) => {
+      socket.emit("joined", { name: username });
+      addStatusToChat("Connected");
     });
-    socket.on("message", function (data) {
-      $("#chat").val(
-        $("#chat").val() + `[${d.toLocaleTimeString()}] ${data.msg}\n`
-      );
-      $("#chat").scrollTop($("#chat")[0].scrollHeight);
-    });
-    $("#text").keypress(function (e) {
+    socket.on("disconnect", (data) => addStatusToChat("Disconnected"));
+
+    socket.on("status", (data) => addStatusToChat(data.msg));
+    socket.on("message", (data) => addMessageToChat(data.msg));
+
+    const messageInput = document.getElementById("messageInput");
+    messageInput.addEventListener("keypress", (e) => {
       const code = e.keyCode || e.which;
       if (code == 13) {
-        text = $("#text").val();
-        $("#text").val("");
-        socket.emit("text", { msg: text });
+        const msg = messageInput.value;
+        messageInput.value = "";
+        socket.emit("message", { msg: msg });
       }
     });
-
-    joinBtn.addEventListener("click", () => {
-      const name = document.getElementById("nameInput").value;
-      localStorage.setItem("username", name);
-      socket.emit("joined", { name: name });
-      usernameModal.hide();
-    });
-
-    const name = localStorage.getItem("username");
-    if (name) {
-      socket.emit("joined", { name: name });
-    } else {
-      usernameModal.show();
-    }
   });
 </script>
 {% endblock %}
