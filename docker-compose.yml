@@ -1,12 +1,24 @@
 services:
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - chat
+
   redis:
     image: redis:latest
     container_name: redis
+    
+
   chat:
     build: 
       dockerfile: Dockerfile
-    ports:
-      - 8080:8080
+    container_name: chat
     environment:
       PORT: 8080
       REDISHOST: redis

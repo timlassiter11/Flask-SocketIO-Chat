@@ -1,0 +1,3 @@
+localhost, autter.love, www.autter.love {
+  reverse_proxy chat:8080
+}
